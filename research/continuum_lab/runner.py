@@ -72,7 +72,7 @@ def ollama_predict(observations, heldout, model):
         f"with exactly {len(heldout)} elements."
     )
     payload = {
-        "model": model, "stream": False,
+        "model": model, "stream": False, "think": False, "format": "json",
         "messages": [
             {"role": "system", "content": instruction},
             {"role": "user", "content": json.dumps({"examples": observations, "queries": heldout})},
