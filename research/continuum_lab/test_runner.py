@@ -1,7 +1,9 @@
 """No external dependencies. Run: python -m unittest discover -s research/continuum_lab -v"""
 import unittest
-from runner import INPUTS, choose_probe, rules, run, survivors
+from runner import INPUTS, choose_probe, ollama_predict, rules, run, survivors
 import random
+import io
+from unittest.mock import patch
 
 
 class ContinuumTests(unittest.TestCase):
@@ -25,6 +27,14 @@ class ContinuumTests(unittest.TestCase):
         for strategy in ("random", "active"):
             self.assertEqual(a["strategies"][strategy]["tested"], 14 * (8 - 3))
             self.assertEqual(len(a["strategies"][strategy]["episodes"]), 14)
+
+    def test_local_model_wire_protocol(self):
+        data = io.BytesIO(b'{"message": {"content": "[1, 0]"}}')
+        with patch("urllib.request.urlopen", return_value=data) as mock_call:
+            response = ollama_predict([((0, 0, 0), 0)], [(0, 1, 1), (1, 0, 0)], "qwen3:0.6b")
+        self.assertEqual(response, [1, 0])
+        request = mock_call.call_args.args[0]
+        self.assertEqual(request.full_url, "http://127.0.0.1:11434/api/chat")
 
     def test_invalid_budget(self):
         with self.assertRaises(ValueError):
